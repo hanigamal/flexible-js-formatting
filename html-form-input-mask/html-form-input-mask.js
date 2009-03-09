@@ -55,6 +55,10 @@ Xaprb.InputMask = {
          format: '(   )   -    ',
          regex:  /\d/
       },
+      phone_dashed: {
+         format: '   -   -    ',
+         regex:  /\d/
+      },
       ssn: {
          format: '   -  -    ',
          regex:  /\d/
@@ -68,8 +72,8 @@ Xaprb.InputMask = {
    /* Finds every element with class input_mask and applies masks to them.
     */
    setupElementMasks: function() {
-      if ( document.getElementsByClassName ) { // Requires the Prototype library
-         document.getElementsByClassName('input_mask').each(function(item) {
+      if ( $$ ) { // Requires the Prototype library
+         $$('input.input_mask').each(function(item) {
             Event.observe(item, 'keypress',
                Xaprb.InputMask.applyMask.bindAsEventListener(item), true);
          });
@@ -91,9 +95,14 @@ Xaprb.InputMask = {
             var str     = this.value + ch;
             var pos     = str.length;
             if ( mask.regex.test(ch) && pos <= mask.format.length ) {
+               // Fill in before
                if ( mask.format.charAt(pos - 1) != ' ' ) {
-                  str = this.value + mask.format.charAt(pos - 1) + ch;
+                  str = this.value + mask.format.charAt(pos++ - 1) + ch;
                }
+	       // Fill an after
+               if ( mask.format.charAt(pos) != ' ' ) {
+                  str += mask.format.charAt(pos);
+               }        
                this.value = str;
             }
             Event.stop(event);
