@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2006 Baron Schwartz <baron at xaprb dot com>
+ * Copyright (C) 2009 Titi Ala'ilima <tigre at pobox dot com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -10,7 +11,7 @@
  * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
  * details.
  *
- * $Id: html-form-input-mask.js,v 1.6 2006-11-03 04:04:29 baron Exp $
+ * html-form-input-mask.js,v 1.7 2009-03-09
  */
 
 /* Set up a global Xaprb object to act as the Xaprb namespace, without colliding
