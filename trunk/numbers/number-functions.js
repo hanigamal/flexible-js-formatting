@@ -24,7 +24,7 @@
 Number.formatFunctions = {count:0};
 
 // Constants useful for controlling the format of numbers in special cases.
-Number.prototype.NaN         = 'NaN';
+Number.prototype.NaNstring   = 'NaN';
 Number.prototype.posInfinity = 'Infinity';
 Number.prototype.negInfinity = '-Infinity';
 
@@ -140,9 +140,9 @@ Number.createTerminalFormat = function(format) {
             + "var arr = [sci.l, sci.r];\n";
     }
     else {
-        // If there is no decimal point, round to nearest integer, AWAY from zero
+        // If there is no decimal point, round to nearest integer
         if (format.indexOf('.') < 0) {
-            code += "val = (val > 0) ? Math.ceil(val) : Math.floor(val);\n";
+            code += "val = Math.round(val);\n"
         }
         // Numbers are rounded to the correct number of digits to the right of the decimal
         code += "var arr = val.round(" + rdigits + ").toFixed(" + rdigits + ").split('.');\n";
@@ -206,10 +206,15 @@ Number.toScientific = function(val, ldigits, rdigits, scidigits, showsign) {
 
 Number.prototype.round = function(decimals) {
     if (decimals > 0) {
-        var m = this.toFixed(decimals + 1).match(
+        // decimalPrecision variable is an ugly hack to limit toFixed() parameter to 20, which is ECMAScript maximum supported range
+        // numbers like 0.54999999999999999, with #.# format, will still be rounded to 0.6, since there is simply not enough precision
+        decimalPrecision = Math.min(decimals + 10,20);
+        var m = this.toFixed(decimalPrecision).match(
             new RegExp("(-?\\d*)\.(\\d{" + decimals + "})(\\d)\\d*$"));
         if (m && m.length) {
-            return new Number(m[1] + "." + String.leftPad(Math.round(m[2] + "." + m[3]), decimals, "0"));
+            var carryover = (m[1].charAt(0) == '-') ? -1 : 1; // negative number carryovers need to be negative, too
+            var s = String.leftPad(Math.round(m[2] + "." + m[3]), decimals, "0");
+            return (s.length > decimals) ? new Number(m[1]) + carryover : new Number(m[1] + "." + s);
         }
     }
     return this;
