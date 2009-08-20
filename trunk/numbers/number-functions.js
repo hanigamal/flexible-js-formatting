@@ -141,8 +141,11 @@ Number.createTerminalFormat = function(format) {
     }
     else {
         // If there is no decimal point, round to nearest integer
+        // rounding half AWAY from zero, as in Excel (as opposed to Math.round())
+        // Hint: if context is present, we're always working with absolute values, so no adjustments are necessary
         if (format.indexOf('.') < 0) {
-            code += "val = Math.round(val);\n"
+            code += "var sign = (this < 0 && context == null) ? -1 : 1;\n";
+            code += "val = Math.round(val*sign)*sign;\n";
         }
         // Numbers are rounded to the correct number of digits to the right of the decimal
         code += "var arr = val.round(" + rdigits + ").toFixed(" + rdigits + ").split('.');\n";
