@@ -76,7 +76,9 @@ var successes = [
     -0.95, "#.#", "-1.0",
     0.1, "#", "0",
     // 0.54999999999999999, "#.#", "0.5", // -- this test will always be broken see comment in number-functions.js, round() function
-    0.54999999999, "#.#", "0.5"
+    0.54999999999, "#.#", "0.5",
+    -0.5, "#;#", "1",
+    -0.5, "#", "-1" // this is often disputed (halved are rounded up, so result should be 0) but this is how Excel does it, so it must be right :)
     ];
 function testOne() {
     for (var i = 0; i < successes.length; i += 3) {
