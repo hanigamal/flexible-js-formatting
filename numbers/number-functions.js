@@ -27,6 +27,7 @@ Number.formatFunctions = {count:0};
 Number.prototype.NaNstring   = 'NaN';
 Number.prototype.posInfinity = 'Infinity';
 Number.prototype.negInfinity = '-Infinity';
+Number.prototype.conditionRE = /\[(>=|<=|=|>|<)([0-9\.]+)\]/;
 
 Number.prototype.numberFormat = function(format, context) {
     if (isNaN(this) ) {
@@ -42,41 +43,96 @@ Number.prototype.numberFormat = function(format, context) {
         Number.createNewFormat(format);
     }
     return this[Number.formatFunctions[format]](context);
-}
+};
 
 Number.createNewFormat = function(format) {
     var funcName = "format" + Number.formatFunctions.count++;
     Number.formatFunctions[format] = funcName;
     var code = "Number.prototype." + funcName + " = function(context){\n";
 
-    // Decide whether the function is a terminal or a pos/neg/zero function
-    var formats = format.split(";");
-    switch (formats.length) {
-        case 1:
-            code += Number.createTerminalFormat(format);
+    var formats = format.split(";");      // identify format components
+
+    var equalConditionsCode = '';         // pull out equal conditions in front of the rest
+    var otherConditionsCode = '';         // overlaping conditions (>= 1000 and <= 2000 etc. are handled left to right)
+    var defaultConditionsCount = 0;       // up to 3 blocks can have no conditions defined, they will be treated as [>0], [<0] and [=0]
+    var defaultConditionFormat = '';       // use this if there are multiple components but only one is default (without a custom condition)
+
+    if (formats.length < 2) {
+        code += Number.createTerminalFormat(format);
+    } else {
+        
+        for (var i=0,format; format=formats[i]; i++){
+            if ((result = format.match(Number.prototype.conditionRE))!==null) { // custom condition block
+                var newFormat = format.replace(result[0],'');
+                if (result[1]=='=') {
+                    equalConditionsCode += Number.createConditionCode(result[1], result[2], newFormat);
+                } else {
+                    otherConditionsCode += Number.createConditionCode(result[1], result[2], newFormat);
+                }
+            } else { // this block has no custom condition
+                switch (defaultConditionsCount) {
+                    case 0: // positive condition
+                        defaultConditionFormat = format; // see defaultConditionFormat
+                        otherConditionsCode += Number.createConditionCode('>=', 0, format);
+                        break;
+                    case 1: // negative condition
+                        otherConditionsCode += Number.createConditionCode('<', 0, format);
+                        break;
+                    case 2: // zero condition
+                        equalConditionsCode += Number.createConditionCode('=', 0, format);
+                        break;
+                    default:
+                        equalConditionsCode = "throw 'Too many semicolons in format string';" + equalConditionsCode;
+                        break;
+                }
+                defaultConditionsCount++;
+            }
+        };
+
+        if (defaultConditionsCount==1) { // we just have the default component, let's use it as a generic component instead of positive
+            otherConditionsCode += otherConditionsCode += Number.createConditionCode('<', 0, defaultConditionFormat);
+        }
+
+        code += equalConditionsCode + otherConditionsCode;
+
+    }
+
+    code += "}";
+
+    // console.log(code);
+    eval(code);
+};
+
+Number.createConditionCode = function(condition, conditionNumber, format) {
+    var conditionStr = '';
+    
+    switch(condition) {
+        case '=':
+            conditionStr = '==';
             break;
-        case 2:
-            code += "return (this < 0) ? this.numberFormat(\""
-                + String.escape(formats[1])
-                + "\", 1) : this.numberFormat(\""
-                + String.escape(formats[0])
-                + "\", 2);";
+        case '>':
+            conditionStr = '> ';
             break;
-        case 3:
-            code += "return (this < 0) ? this.numberFormat(\""
-                + String.escape(formats[1])
-                + "\", 1) : ((this == 0) ? this.numberFormat(\""
-                + String.escape(formats[2])
-                + "\", 2) : this.numberFormat(\""
-                + String.escape(formats[0])
-                + "\", 3));";
+        case '<':
+            conditionStr = '< ';
+            break;
+        case '>=':
+            conditionStr = '>=';
+            break;
+        case '<=':
+            conditionStr = '<=';
             break;
         default:
-            code += "throw 'Too many semicolons in format string';";
+            throw 'Error! Unrecognized condition format!';
             break;
     }
-    eval(code + "}");
-}
+    
+    return "\n"+
+        'if (this '+conditionStr+' '+parseFloat(conditionNumber,10)+') {'+
+            'return this.numberFormat("' + String.escape(format)+ '", 1);'+
+        '}';
+};
+
 
 Number.createTerminalFormat = function(format) {
     // If there is no work to do, just return the literal value
@@ -168,7 +224,7 @@ Number.createTerminalFormat = function(format) {
         code += "arr[1] = arr[1].replace(/(\\d{" + rdigits + "})/, '$1" + sciletter + "' + sci.s);\n";
     }
     return code + "return arr.join('.');\n";
-}
+};
 
 Number.toScientific = function(val, ldigits, rdigits, scidigits, showsign) {
     var result = {l:"", r:"", s:""};
@@ -205,7 +261,7 @@ Number.toScientific = function(val, ldigits, rdigits, scidigits, showsign) {
     }
     result.s = ex + String.leftPad(Math.abs(result.s).toFixed(0), scidigits, "0");
     return result;
-}
+};
 
 Number.prototype.round = function(decimals) {
     if (decimals > 0) {
@@ -221,7 +277,7 @@ Number.prototype.round = function(decimals) {
         }
     }
     return this;
-}
+};
 
 Number.injectIntoFormat = function(val, format, stuffExtras) {
     var i = 0;
@@ -263,11 +319,11 @@ Number.injectIntoFormat = function(val, format, stuffExtras) {
         result += format.substring(i);
     }
     return result.replace(/#/g, "").replace(/\?/g, " ");
-}
+};
 
 Number.addSeparators = function(val) {
     return val.reverse().replace(/(\d{3})/g, "$1,").reverse().replace(/^(-)?,/, "$1");
-}
+};
 
 String.prototype.reverse = function() {
     var res = "";
@@ -275,12 +331,12 @@ String.prototype.reverse = function() {
         res += this.charAt(i - 1);
     }
     return res;
-}
+};
 
 String.prototype.trim = function(ch) {
     if (!ch) ch = ' ';
     return this.replace(new RegExp("^" + ch + "+|" + ch + "+$", "g"), "");
-}
+};
 
 String.leftPad = function (val, size, ch) {
     var result = new String(val);
@@ -291,8 +347,8 @@ String.leftPad = function (val, size, ch) {
         result = ch + result;
     }
     return result;
-}
+};
 
 String.escape = function(string) {
     return string.replace(/('|\\)/g, "\\$1");
-}
+};

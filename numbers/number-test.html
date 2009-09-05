@@ -78,7 +78,28 @@ var successes = [
     // 0.54999999999999999, "#.#", "0.5", // -- this test will always be broken see comment in number-functions.js, round() function
     0.54999999999, "#.#", "0.5",
     -0.5, "#;#", "1",
-    -0.5, "#", "-1" // this is often disputed (halved are rounded up, so result should be 0) but this is how Excel does it, so it must be right :)
+    -0.5, "#", "-1", // this is often disputed (halved are rounded up, so result should be 0) but this is how Excel does it, so it must be right :)
+    1000, '[>500]###.##;###', '1000.00',
+    400, '[>500]###.##;###', '400',
+    400, '[>500]###.##;[<1000]###;###.#', '400',
+    700, '[>500]###.##;[<1000]###;###.#', '700.00',
+    0,   '[>500]###.##;[<1000]###;###.#', '0',
+    -5,   '[>500]###.##;[>1000]###;###.#;-###.#', '-5.0',
+    1001, '[>500]###.##;[>1000]###;[>2000]###.#', '1001.00',
+    2001, '[>500]###.##;[>1000]###;[>2000]###.#', '2001.00',
+    1001, '[>2000]###.#;[>1000]###;[>500]###.##', '1001',
+    2001, '[>2000]###.#;[>1000]###;[>500]###.##', '2001.0',
+    0.015, '[Blue][<0.1]0.000;[<1]0.00;[Red]0.0', '[Blue]0.015',
+    0.025, '[Blue][<0.1]0.000;[<1]0.00;[Red]0.0', '[Blue]0.025',
+    0.115, '[Blue][<0.1]0.000;[<1]0.00;[Red]0.0', '0.12',
+    0.225, '[Blue][<0.1]0.000;[<1]0.00;[Red]0.0', '0.23',
+    1.005, '[Blue][<0.1]0.000;[<1]0.00;[Red]0.0', '[Red]1.0',
+    1.115, '[Blue][<0.1]0.000;[<1]0.00;[Red]0.0', '[Red]1.1',
+    1.115, '[>1a]0.00;0.0', '[>1a]1.12', // [>1a] not recognized as a condition
+    -1.115,'[>1a]0.00;0.0', '1.1', // [>1a] not recognized as a condition
+    -0.5,'[>1]#.##;#', '1',  // use default component for both positive and negative numbers if only one default
+    -0.5,'[>1]#.##;#;-#', '-1',
+    0, '[>500]###.##;###.#;[<1000]###', '0.0' // order matters, here ###.# (which has implicit rule [>0]) is applied before [<1000]
     ];
 function testOne() {
     for (var i = 0; i < successes.length; i += 3) {
