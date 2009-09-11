@@ -99,7 +99,10 @@ var successes = [
     -1.115,'[>1a]0.00;0.0', '1.1', // [>1a] not recognized as a condition
     -0.5,'[>1]#.##;#', '1',  // use default component for both positive and negative numbers if only one default
     -0.5,'[>1]#.##;#;-#', '-1',
-    0, '[>500]###.##;###.#;[<1000]###', '0.0' // order matters, here ###.# (which has implicit rule [>0]) is applied before [<1000]
+    0, '[>500]###.##;###.#;[<1000]###', '0.0', // order matters, here ###.# (which has implicit rule [>0]) is applied before [<1000]
+    501, '[>500]###', '501',
+    1, '[>500]###', '1.00', // if not specified ###.## is the default format
+    1, '[>500]###;###.#', '1.0' // only supply default ###.# if there is no unconditional segment
     ];
 function testOne() {
     for (var i = 0; i < successes.length; i += 3) {

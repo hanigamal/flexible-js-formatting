@@ -50,14 +50,14 @@ Number.createNewFormat = function(format) {
     Number.formatFunctions[format] = funcName;
     var code = "Number.prototype." + funcName + " = function(context){\n";
 
-    var formats = format.split(";");      // identify format components
+    var formats = format.split(";");      // identify individual rules
 
     var equalConditionsCode = '';         // pull out equal conditions in front of the rest
     var otherConditionsCode = '';         // overlaping conditions (>= 1000 and <= 2000 etc. are handled left to right)
-    var defaultConditionsCount = 0;       // up to 3 blocks can have no conditions defined, they will be treated as [>0], [<0] and [=0]
-    var defaultConditionFormat = '';       // use this if there are multiple components but only one is default (without a custom condition)
+    var rulesWithoutConditionsCount = 0;  // up to 3 rules can have no conditions defined, they will be treated as [>0], [<0] and [=0] respectively
+    var defaultRuleFormat = '###.##';     // use this if there are multiple rules but none or only one is without a custom condition
 
-    if (formats.length < 2) {
+    if (formats.length < 2 && format.match(Number.prototype.conditionRE)==null) {
         code += Number.createTerminalFormat(format);
     } else {
         
@@ -70,9 +70,9 @@ Number.createNewFormat = function(format) {
                     otherConditionsCode += Number.createConditionCode(result[1], result[2], newFormat);
                 }
             } else { // this block has no custom condition
-                switch (defaultConditionsCount) {
+                switch (rulesWithoutConditionsCount) {
                     case 0: // positive condition
-                        defaultConditionFormat = format; // see defaultConditionFormat
+                        defaultRuleFormat = format; // see var defaultRuleFormat above
                         otherConditionsCode += Number.createConditionCode('>=', 0, format);
                         break;
                     case 1: // negative condition
@@ -85,12 +85,14 @@ Number.createNewFormat = function(format) {
                         equalConditionsCode = "throw 'Too many semicolons in format string';" + equalConditionsCode;
                         break;
                 }
-                defaultConditionsCount++;
+                rulesWithoutConditionsCount++;
             }
         };
 
-        if (defaultConditionsCount==1) { // we just have the default component, let's use it as a generic component instead of positive
-            otherConditionsCode += otherConditionsCode += Number.createConditionCode('<', 0, defaultConditionFormat);
+        if (rulesWithoutConditionsCount==1) { // we just have the default component, let's use it as a generic component instead of positive
+            otherConditionsCode += Number.createConditionCode('<', 0, defaultRuleFormat);
+        } else if (rulesWithoutConditionsCount==0) {  // no default component is present, use the default ###.## format for "all else"
+            otherConditionsCode += Number.createConditionCode('all', 0, defaultRuleFormat);
         }
 
         code += equalConditionsCode + otherConditionsCode;
@@ -106,31 +108,35 @@ Number.createNewFormat = function(format) {
 Number.createConditionCode = function(condition, conditionNumber, format) {
     var conditionStr = '';
     
-    switch(condition) {
-        case '=':
-            conditionStr = '==';
-            break;
-        case '>':
-            conditionStr = '> ';
-            break;
-        case '<':
-            conditionStr = '< ';
-            break;
-        case '>=':
-            conditionStr = '>=';
-            break;
-        case '<=':
-            conditionStr = '<=';
-            break;
-        default:
-            throw 'Error! Unrecognized condition format!';
-            break;
-    }
+    if (condition == 'all') {
+        return "\n"+'return this.numberFormat("' + String.escape(format)+ '", 1);';
+    } else {
+        switch(condition) {
+            case '=':
+                conditionStr = '==';
+                break;
+            case '>':
+                conditionStr = '> ';
+                break;
+            case '<':
+                conditionStr = '< ';
+                break;
+            case '>=':
+                conditionStr = '>=';
+                break;
+            case '<=':
+                conditionStr = '<=';
+                break;
+            default:
+                throw 'Error! Unrecognized condition format!';
+                break;
+        }
     
-    return "\n"+
-        'if (this '+conditionStr+' '+parseFloat(conditionNumber,10)+') {'+
-            'return this.numberFormat("' + String.escape(format)+ '", 1);'+
-        '}';
+        return "\n"+
+            'if (this '+conditionStr+' '+parseFloat(conditionNumber,10)+') {'+
+                'return this.numberFormat("' + String.escape(format)+ '", 1);'+
+            '}';
+    }
 };
 
 
