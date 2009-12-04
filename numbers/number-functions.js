@@ -109,7 +109,7 @@ Number.createConditionCode = function(condition, conditionNumber, format) {
     var conditionStr = '';
     
     if (condition == 'all') {
-        return "\n"+'return this.numberFormat("' + String.escape(format)+ '", 1);';
+        return "\n"+"return this.numberFormat('" + String.escape(format)+ "', 1);";
     } else {
         switch(condition) {
             case '=':
@@ -134,7 +134,7 @@ Number.createConditionCode = function(condition, conditionNumber, format) {
     
         return "\n"+
             'if (this '+conditionStr+' '+parseFloat(conditionNumber,10)+') {'+
-                'return this.numberFormat("' + String.escape(format)+ '", 1);'+
+                "return this.numberFormat('" + String.escape(format)+ "', 1);"+
             '}';
     }
 };
@@ -356,5 +356,5 @@ String.leftPad = function (val, size, ch) {
 };
 
 String.escape = function(string) {
-    return string.replace(/('|\\)/g, "\\$1");
+    return string.replace(/(')/g, "\\$1").replace(/[\r\n]/g, '');
 };
