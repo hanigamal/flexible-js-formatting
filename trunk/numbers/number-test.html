@@ -102,7 +102,13 @@ var successes = [
     0, '[>500]###.##;###.#;[<1000]###', '0.0', // order matters, here ###.# (which has implicit rule [>0]) is applied before [<1000]
     501, '[>500]###', '501',
     1, '[>500]###', '1.00', // if not specified ###.## is the default format
-    1, '[>500]###;###.#', '1.0' // only supply default ###.# if there is no unconditional segment
+    1, '[>500]###;###.#', '1.0', // only supply default ###.# if there is no unconditional segment
+    1000,  '#,###.## <scr'+'ipt>alert("Hi");</scr'+'ipt>', '1,000.00 <scr'+'ipt>alert("Hi")',
+    1000,  '[\>100]#,###.## <scr'+'ipt>alert("Hi");</scr'+'ipt>', '1,000.00 <scr'+'ipt>alert("Hi")',
+    -1000, '[\>100]#,###.## <scr'+'ipt>alert("Hi");</scr'+'ipt>', '</scr'+'ipt>',
+    5, '###Hi"', '5Hi"',
+    5, "###Hi'", "5Hi'",
+    5, "###\r\nHi", "5Hi"
     ];
 function testOne() {
     for (var i = 0; i < successes.length; i += 3) {
