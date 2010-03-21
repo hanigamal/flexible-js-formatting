@@ -1,4 +1,6 @@
 /*
+ * http://code.google.com/p/flexible-js-formatting/
+ * 
  * Copyright (C) 2004 Baron Schwartz <baron at sequent dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -108,6 +110,8 @@ Date.getFormatCode = function(character) {
         return "String.leftPad(this.getMinutes(), 2, '0') + ";
     case "s":
         return "String.leftPad(this.getSeconds(), 2, '0') + ";
+    case "X":
+        return "String.leftPad(this.getMilliseconds(), 3, '0') + ";
     case "O":
         return "this.getGMTOffset() + ";
     case "T":
@@ -134,7 +138,7 @@ Date.createParser = function(format) {
     Date.parseFunctions[format] = funcName;
 
     var code = "Date." + funcName + " = function(input){\n"
-        + "var y = -1, m = -1, d = -1, h = -1, i = -1, s = -1, z = 0;\n"
+        + "var y = -1, m = -1, d = -1, h = -1, i = -1, s = -1, ms = -1, z = 0;\n"
         + "var d = new Date();\n"
         + "y = d.getFullYear();\n"
         + "m = d.getMonth();\n"
@@ -164,7 +168,9 @@ Date.createParser = function(format) {
         }
     }
 
-    code += "if (y > 0 && m >= 0 && d > 0 && h >= 0 && i >= 0 && s >= 0)\n"
+    code += "if (y > 0 && m >= 0 && d > 0 && h >= 0 && i >= 0 && s >= 0 && ms >= 0)\n"
+        + "{return new Date(y, m, d, h, i, s, ms).applyOffset(z);}\n"
+        + "if (y > 0 && m >= 0 && d > 0 && h >= 0 && i >= 0 && s >= 0)\n"
         + "{return new Date(y, m, d, h, i, s).applyOffset(z);}\n"
         + "else if (y > 0 && m >= 0 && d > 0 && h >= 0 && i >= 0)\n"
         + "{return new Date(y, m, d, h, i).applyOffset(z);}\n"
@@ -270,6 +276,10 @@ Date.formatCodeToRegex = function(character, currentGroup) {
         return {g:1,
             c:"s = parseInt(results[" + currentGroup + "], 10);\n",
             s:"(\\d{2})"};
+    case "X":
+      return {g:1,
+          c:"ms = parseInt(results[" + currentGroup + "], 10);\n",
+          s:"(\\d{3})"};
     case "O":
     case "P":
         return {g:1,
