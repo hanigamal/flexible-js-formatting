@@ -139,7 +139,6 @@ Number.createConditionCode = function(condition, conditionNumber, format) {
     }
 };
 
-
 Number.createTerminalFormat = function(format) {
     // If there is no work to do, just return the literal value
     if (format.length > 0 && format.search(/[0#?]/) == -1) {
@@ -170,7 +169,8 @@ Number.createTerminalFormat = function(format) {
         rodp = m[2].replace(/\./g, "");
     }
     // Look for %
-    if (format.indexOf('%') >= 0) {
+    var percentageCharIndex = format.indexOf('%');
+    if (percentageCharIndex == 0 || (percentageCharIndex > 0 && format[percentageCharIndex - 1] != '\\')) {
         code += "val *= 100;\n";
     }
     // Look for comma-scaling to the left of the decimal point
@@ -324,7 +324,7 @@ Number.injectIntoFormat = function(val, format, stuffExtras) {
     if (i < format.length) {
         result += format.substring(i);
     }
-    return result.replace(/#/g, "").replace(/\?/g, " ");
+    return result.replace(/#/g, "").replace(/\?/g, " ").replace(stuffExtras ? /%\\/g : /\\%/g, "%");
 };
 
 Number.addSeparators = function(val) {
@@ -356,5 +356,5 @@ String.leftPad = function (val, size, ch) {
 };
 
 String.escape = function(string) {
-    return string.replace(/(')/g, "\\$1").replace(/[\r\n]/g, '');
+    return string.replace(/\\/g, '\\\\').replace(/(')/g, "\\$1").replace(/[\r\n]/g, '');
 };
