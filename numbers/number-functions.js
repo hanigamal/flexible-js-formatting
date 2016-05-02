@@ -169,8 +169,8 @@ Number.createTerminalFormat = function(format) {
         rodp = m[2].replace(/\./g, "");
     }
     // Look for %
-    var percentagesCharIndex = format.indexOf('%');
-    if (percentagesCharIndex == 0 || (percentagesCharIndex > 0 && format[percentagesCharIndex - 1] != '\\')) {
+    var percentageCharIndex = format.indexOf('%');
+    if (percentageCharIndex == 0 || (percentageCharIndex > 0 && format[percentageCharIndex - 1] != '\\')) {
         code += "val *= 100;\n";
     }
     // Look for comma-scaling to the left of the decimal point
